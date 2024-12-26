@@ -52,7 +52,7 @@ class ChatGPTClient(BaseBrowser):
 
         return True
 
-    def login(self, username: str, password: str) -> bool:
+    def login(self, username: str, password: str, sso : bool) -> bool:
         """
         Performs the login process with the provided username and password.
 
@@ -77,6 +77,23 @@ class ChatGPTClient(BaseBrowser):
         # login_button = self.find_or_fail(By.XPATH, self.markers.login_xq, fail_ok=True)
         # login_button.click()
         self.logger.info("Clicked login button for the first time.")
+
+        if sso:
+            self.logger.info("SSO login is selected")
+            sso_button = self.wait_until_appear(By.XPATH, '//button[@class="social-btn"][span/img[@alt="Google logo"]]').click()
+            self.logger.info("Clicked SSO login button")
+            sso_gmail = self.wait_until_appear(By.XPATH, '//input[@type="email"]')
+            sso_gmail.send_keys('anandeshsharma@gmail.com')
+            time.sleep(10)
+            self.browser.find_element(By.XPATH, '//button[span[text()="Next"]]').click()
+            sso_pass = self.wait_until_appear(By.XPATH, '//input[@type="password"]')
+            sso_pass.send_keys('Rock4494@')
+            self.browser.find_element(By.XPATH, '//button[span[text()="Next"]]').click()
+
+            time.sleep(5)
+            
+            
+            return True
 
         for _ in range(5):
             email_box = self.wait_until_appear(
