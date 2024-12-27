@@ -28,6 +28,8 @@ markers = EasyDict(
             "textarea_tq"   : "textarea",
             "send_btn_xq"   : "//button[@data-testid='send-button']",
             "textarea_xq"   : "//div[@contenteditable='true']",
+            "file_input_xq" : "//input[@type='file']",
+            "prompt_wait_xq": "//span[@data-state='closed']/button[@aria-label='Send prompt']",
             "gpt_xq"        : "//span[text()='{}']"
         },
         "Claude": {
