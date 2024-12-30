@@ -52,7 +52,7 @@ class ChatGPTClient(BaseBrowser):
 
         return True
 
-    def login(self, username: str, password: str) -> bool:
+    def login(self, username: str, password: str, sso : bool) -> bool:
         """
         Performs the login process with the provided username and password.
 
@@ -77,6 +77,25 @@ class ChatGPTClient(BaseBrowser):
         # login_button = self.find_or_fail(By.XPATH, self.markers.login_xq, fail_ok=True)
         # login_button.click()
         self.logger.info("Clicked login button for the first time.")
+
+        if sso:
+            self.logger.info("SSO login is selected")
+            sso_button = self.wait_until_appear(By.XPATH, '//button[@class="social-btn"][span/img[@alt="Google logo"]]').click()
+            self.logger.info("Clicked SSO login button")
+            sso_gmail = self.wait_until_appear(By.XPATH, '//input[@type="email"]')
+            sso_gmail.send_keys('anandeshsharma@gmail.com')
+            time.sleep(1)
+            self.browser.find_element(By.XPATH, '//button[span[text()="Next"]]').click()
+            time.sleep(5)
+            sso_pass = self.wait_until_appear(By.XPATH, '//input[@type="password"]')
+            time.sleep(5)
+            sso_pass.send_keys('Rock4494@')
+            time.sleep(5)
+            self.browser.find_element(By.XPATH, '//button[span[text()="Next"]]').click()
+            time.sleep(5)
+            
+            
+            return True
 
         for _ in range(5):
             email_box = self.wait_until_appear(
@@ -187,7 +206,10 @@ class ChatGPTClient(BaseBrowser):
         self.logger.info("response is ready")
         return self.interim_response
 
-    def interact(self, prompt: str) -> str:
+    def interact(self, 
+                 prompt: str, 
+                 chat_id: str = '', 
+                 input_file: str = '') -> str:
         """Sends a prompt and retrieves the response from the ChatGPT system.
 
         This function interacts with the ChatGPT.
@@ -199,19 +221,45 @@ class ChatGPTClient(BaseBrowser):
 
         Args:
             prompt (str): The interaction text.
+            time_period (float): The time period to wait for the response. Defaults to 0.5 seconds.
+            chat_id (str): The chat ID to interact with. Defaults to an empty string.
+            input_file (str): The file path to upload. Defaults to an empty string.
 
         Returns:
             str: The generated response.
         """
-
+        chat_url = f"{self.url}/c/{chat_id}"
+        if chat_id and self.browser.current_url != chat_url:
+            self.logger.info("Chat ID is provided: %s", chat_id)
+            self.browser.get(chat_url)
+            time.sleep(5)
+        
         text_area = self.wait_until_appear(By.XPATH, self.markers.textarea_xq)
         if not text_area:
             raise RuntimeError(
                 "Unable to find the text prompt area. Please raise an issue with verbose=True"
             )
+        if input_file:
+            file_input_area = self.wait_until_appear(By.XPATH, self.markers.file_input_xq)
+            self.browser.execute_script("arguments[0].value = '';", file_input_area)
+            if not file_input_area:
+                raise RuntimeError(
+                    "Unable to find the file input area. Please raise an issue with verbose=True"
+                )
+            file_input_area.send_keys(input_file)
+
         for each_line in prompt.split("\n"):
             text_area.send_keys(each_line)
             text_area.send_keys(Keys.SHIFT + Keys.ENTER)
+        
+        # wait till the prompt button is ready
+        while True:
+            try:
+                self.browser.find_element(By.XPATH, self.markers.prompt_wait_xq)
+                time.sleep(0.5)
+            except Exceptions.NoSuchElementException:
+                break
+
         text_area.send_keys(Keys.RETURN)
 
         response = self.get_last_response()

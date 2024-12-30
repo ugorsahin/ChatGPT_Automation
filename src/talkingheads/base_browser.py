@@ -102,6 +102,7 @@ class BaseBrowser:
         uc_params: dict = None,
         tag: str = None,
         multihead=False,
+        sso: bool = False,
     ):
         self.client_name = client_name
         self.markers = markers[client_name]
@@ -117,6 +118,7 @@ class BaseBrowser:
         self.timeout_dur = timeout_dur
         self.multihead = multihead
         self.interim_response = None
+        self.sso = sso
 
         if credential_check:
             if username or password:
@@ -202,7 +204,7 @@ class BaseBrowser:
             raise RuntimeError("Verification failed, please check your connection.")
 
         if not skip_login:
-            self.login(username, password)
+            self.login(username, password, self.sso)
 
         self.logger.info("%s is ready to interact", self.client_name)
         self.ready = True
@@ -467,8 +469,15 @@ class BaseBrowser:
         self.logger.info("The pass verification function is not implemented")
         return True
 
+    def sso_login(self, username: str, password: str) -> bool:
+        """
+        Logs in using the SSO login process.
+        """
+        self.logger.info("The SSO login function is not implemented")
+        return True
+
     @abc.abstractmethod
-    def login(self, username: str, password: str) -> bool:
+    def login(self, username: str, password: str, sso: bool = False) -> bool:
         """
         Performs the login process with the provided username and password.
         """
